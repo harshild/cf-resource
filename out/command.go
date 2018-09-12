@@ -53,6 +53,7 @@ func (command *Command) Run(request Request) (Response, error) {
 		request.Params.ManifestPath,
 		request.Params.Path,
 		request.Params.CurrentAppName,
+		request.Params.SmokeTest,
 		request.Params.Vars,
 		request.Params.VarsFiles,
 		request.Params.DockerUsername,

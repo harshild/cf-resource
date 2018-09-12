@@ -57,6 +57,7 @@ var _ = Describe("Out", func() {
 				ManifestPath:   "project/manifest.yml",
 				Path:           "another-project",
 				CurrentAppName: "awesome-app",
+				SmokeTest: "",
 			},
 		}
 	})
@@ -321,6 +322,46 @@ var _ = Describe("Out", func() {
 			Expect(session.Err).To(gbytes.Say("CF_DOCKER_PASSWORD=DOCKER_PASSWORD"))
 		})
 	})
+
+	Context("when doing a blue green deployment with smoke test", func() {
+		BeforeEach(func() {
+			request.Params.CurrentAppName = "sample_app"
+			request.Params.SmokeTest = "Test script"
+		})
+		It("pushes an application to cloud foundry", func() {
+			session, err := gexec.Start(
+				cmd,
+				GinkgoWriter,
+				GinkgoWriter,
+			)
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(session).Should(gexec.Exit(0))
+
+			var response out.Response
+			err = json.Unmarshal(session.Out.Contents(), &response)
+			Expect(err).NotTo(HaveOccurred())
+
+			Expect(response.Version.Timestamp).To(BeTemporally("~", time.Now(), time.Second))
+
+			// shim outputs arguments
+			Expect(session.Err).To(gbytes.Say("cf api https://api.run.pivotal.io --skip-ssl-validation"))
+			Expect(session.Err).To(gbytes.Say("cf auth awesome@example.com hunter2"))
+			Expect(session.Err).To(gbytes.Say("cf target -o org -s space"))
+			Expect(session.Err).To(gbytes.Say("cf blue-green-deploy %s --smoke-test %s -f %s",
+				"sample_app",
+				"\"Test script\"",
+				filepath.Join(tmpDir, "project/manifest.yml"),
+			))
+			Expect(session.Err).To(gbytes.Say(filepath.Join(tmpDir, "another-project")))
+
+			// color should be always
+			Eventually(session.Err).Should(gbytes.Say("CF_COLOR=true"))
+			Eventually(session.Err).Should(gbytes.Say("CF_TRACE=/dev/stderr"))
+		})
+
+	})
+
 	Context("when doing an ordinary cf push", func() {
 		BeforeEach(func() {
 			request.Params.CurrentAppName = ""

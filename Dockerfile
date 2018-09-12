@@ -6,6 +6,9 @@ RUN curl -L "https://cli.run.pivotal.io/stable?release=linux64-binary&source=git
 RUN url=$(curl -s "https://api.github.com/repos/contraband/autopilot/releases/latest" \
     | jq -r '.assets[] | select(.name == "autopilot-linux") | .browser_download_url') &&\
     curl -L "$url" -o /assets/autopilot
+RUN url=$(curl -s "https://api.github.com/repos/bluemixgaragelondon/cf-blue-green-deploy/releases/latest" \
+    | jq -r '.assets[] | select(.name == "blue-green-deploy.linux32") | .browser_download_url') &&\
+    curl -L "$url" -o /assets/bgd
 COPY . /go/src/github.com/concourse/cf-resource
 ENV CGO_ENABLED 0
 RUN go build -o /assets/in github.com/concourse/cf-resource/in/cmd/in
@@ -23,6 +26,8 @@ RUN chmod +x /opt/resource/*
 RUN mv /opt/resource/cf /usr/bin/cf
 RUN mv /opt/resource/autopilot /usr/bin/autopilot
 RUN /usr/bin/cf install-plugin -f /usr/bin/autopilot
+RUN mv /opt/resource/bgd /usr/bin/bgd
+RUN /usr/bin/cf install-plugin -f /usr/bin/bgd
 
 FROM resource AS tests
 COPY --from=builder /tests /go-tests

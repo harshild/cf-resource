@@ -10,7 +10,7 @@ import (
 type PAAS interface {
 	Login(api string, username string, password string, clientID string, clientSecret string, insecure bool) error
 	Target(organization string, space string) error
-	PushApp(manifest string, path string, currentAppName string, vars map[string]interface{}, varsFiles []string, dockerUser string, showLogs bool, noStart bool) error
+	PushApp(manifest string, path string, currentAppName string,smokeTest string, vars map[string]interface{}, varsFiles []string, dockerUser string, showLogs bool, noStart bool) error
 }
 
 type CloudFoundry struct {
@@ -44,7 +44,9 @@ func (cf *CloudFoundry) Target(organization string, space string) error {
 
 func (cf *CloudFoundry) PushApp(
 	manifest string,
-	path string, currentAppName string,
+	path string,
+	currentAppName string,
+	smokeTest string,
 	vars map[string]interface{},
 	varsFiles []string,
 	dockerUser string,
@@ -52,13 +54,17 @@ func (cf *CloudFoundry) PushApp(
 	noStart bool,
 ) error {
 	args := []string{}
-
-	if currentAppName == "" {
+	if currentAppName == "" && smokeTest == "" {
 		args = append(args, "push", "-f", manifest)
 		if noStart {
 			args = append(args, "--no-start")
 		}
-	} else {
+	} else if currentAppName!= "" && smokeTest != "" {
+		args = append(args, "blue-green-deploy", currentAppName,"--smoke-test","\""+smokeTest+"\"", "-f", manifest)
+		if showLogs {
+			args = append(args, "--show-app-log")
+		}
+	}else {
 		args = append(args, "zero-downtime-push", currentAppName, "-f", manifest)
 		if showLogs {
 			args = append(args, "--show-app-log")

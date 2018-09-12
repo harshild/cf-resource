@@ -36,12 +36,13 @@ type FakePAAS struct {
 	targetReturnsOnCall map[int]struct {
 		result1 error
 	}
-	PushAppStub        func(manifest string, path string, currentAppName string, vars map[string]interface{}, varsFiles []string, dockerUser string, showLogs bool, noStart bool) error
+	PushAppStub        func(manifest string, path string, currentAppName string,smokeTest string, vars map[string]interface{}, varsFiles []string, dockerUser string, showLogs bool, noStart bool) error
 	pushAppMutex       sync.RWMutex
 	pushAppArgsForCall []struct {
 		manifest       string
 		path           string
 		currentAppName string
+		smokeTest      string
 		vars           map[string]interface{}
 		varsFiles      []string
 		dockerUser     string
@@ -160,7 +161,7 @@ func (fake *FakePAAS) TargetReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *FakePAAS) PushApp(manifest string, path string, currentAppName string, vars map[string]interface{}, varsFiles []string, dockerUser string, showLogs bool, noStart bool) error {
+func (fake *FakePAAS) PushApp(manifest string, path string, currentAppName string, smokeTest string,vars map[string]interface{}, varsFiles []string, dockerUser string, showLogs bool, noStart bool) error {
 	var varsFilesCopy []string
 	if varsFiles != nil {
 		varsFilesCopy = make([]string, len(varsFiles))
@@ -172,16 +173,17 @@ func (fake *FakePAAS) PushApp(manifest string, path string, currentAppName strin
 		manifest       string
 		path           string
 		currentAppName string
+		smokeTest      string
 		vars           map[string]interface{}
 		varsFiles      []string
 		dockerUser     string
 		showLogs       bool
 		noStart        bool
-	}{manifest, path, currentAppName, vars, varsFilesCopy, dockerUser, showLogs, noStart})
-	fake.recordInvocation("PushApp", []interface{}{manifest, path, currentAppName, vars, varsFilesCopy, dockerUser, showLogs, noStart})
+	}{manifest, path, currentAppName, smokeTest,vars, varsFilesCopy, dockerUser, showLogs, noStart})
+	fake.recordInvocation("PushApp", []interface{}{manifest, path, currentAppName,smokeTest, vars, varsFilesCopy, dockerUser, showLogs, noStart})
 	fake.pushAppMutex.Unlock()
 	if fake.PushAppStub != nil {
-		return fake.PushAppStub(manifest, path, currentAppName, vars, varsFiles, dockerUser, showLogs, noStart)
+		return fake.PushAppStub(manifest, path, currentAppName,smokeTest, vars, varsFiles, dockerUser, showLogs, noStart)
 	}
 	if specificReturn {
 		return ret.result1

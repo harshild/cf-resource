@@ -18,6 +18,7 @@ type Params struct {
 	DockerPassword       string                 `json:"docker_password"`
 	ShowAppLog           bool                   `json:"show_app_log"`
 	NoStart              bool                   `json:"no_start"`
+	SmokeTest            string					`json:"smoke_test"`
 }
 
 type Response struct {
